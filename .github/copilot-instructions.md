@@ -19,4 +19,7 @@ This repository contains Oracle APEX application exports.
 ## Deployment
 - Application is deployed via SQLcl scripts
 - Use deploy.sql as entry point
+
+## Local Skills
+- For Oracle APEX and APEXlang tasks, prefer the local skills in `.github/skills/apex/SKILL.md` and `.github/skills/apexlang/SKILL.md`
 <!-- oracle-apex-context:end -->
