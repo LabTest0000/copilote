@@ -1,7 +1,7 @@
 page 4 (
-    name: Tester les action dynamiques
+    name: Tester les actions dynamiques
     alias: TESTER-LES-ACTIONS-DYNAMIQUES
-    title: Tester les action dynamiques
+    title: Tester les actions dynamiques
     appearance {
         pageTemplate: @/standard
         templateOptions: #DEFAULT#
@@ -14,27 +14,39 @@ page 4 (
             ```javascript-browser
             apex.jQuery(() => {
                 apex.item("P4_SELECTED_VALUE").hide();
-            
+
                 const reportRegionSelector = "#les_chiffres_report";
                 const reportTableSelector = `${reportRegionSelector} .t-Report-report`;
                 const filterItemSelector = "#P4_CHIFFRES_FILTER";
-            
+
                 function getReportTable() {
                     return apex.jQuery(reportTableSelector);
                 }
-            
+
+                function hideIdColumn() {
+                    const table = getReportTable();
+
+                    table.find("thead th:first-child, tbody td:first-child").hide();
+                }
+
+                function getFilterValue() {
+                    return apex.jQuery(filterItemSelector).val().toString().trim().toLowerCase();
+                }
+
                 function applyChiffresFilter() {
-                    const filterValue = apex.jQuery(filterItemSelector).val().toString().trim().toLowerCase();
-            
+                    const filterValue = getFilterValue();
+
                     getReportTable()
                         .find("tbody tr")
                         .each(function() {
                             const row = apex.jQuery(this);
-                            const rowText = row.text().toLowerCase();
+                            const rowText = row.children(":not(:first)").text().toLowerCase();
                             row.toggle(filterValue === "" || rowText.indexOf(filterValue) >= 0);
                         });
+
+                    hideIdColumn();
                 }
-            
+
                 function sortChiffresTable(columnIndex) {
                     const table = getReportTable();
                     const tbody = table.find("tbody");
@@ -42,64 +54,67 @@ page 4 (
                     const currentDirection = header.attr("data-sort-direction") === "asc" ? "asc" : "desc";
                     const nextDirection = currentDirection === "asc" ? "desc" : "asc";
                     const rows = tbody.find("tr").get();
-            
+
                     table.find("thead th").removeAttr("data-sort-direction");
                     header.attr("data-sort-direction", nextDirection);
-            
+
                     rows.sort((leftRow, rightRow) => {
                         const leftText = apex.jQuery(leftRow).children().eq(columnIndex).text().trim();
                         const rightText = apex.jQuery(rightRow).children().eq(columnIndex).text().trim();
                         const leftNumber = Number(leftText);
                         const rightNumber = Number(rightText);
-            
+
                         let compareResult;
-            
+
                         if (!Number.isNaN(leftNumber) && !Number.isNaN(rightNumber)) {
                             compareResult = leftNumber - rightNumber;
                         } else {
                             compareResult = leftText.localeCompare(rightText, "fr", { sensitivity: "base" });
                         }
-            
+
                         return nextDirection === "asc" ? compareResult : -compareResult;
                     });
-            
+
                     apex.jQuery.each(rows, (_, row) => tbody.append(row));
                     applyChiffresFilter();
                 }
-            
+
                 function showChiffresModal(row) {
                     const escapeHtml = apex.util.escapeHTML;
                     const headers = [];
                     const values = [];
-            
-                    getReportTable().find("thead th").each(function() {
+
+                    getReportTable().find("thead th:visible").each(function() {
                         headers.push(apex.jQuery(this).text().trim());
                     });
-            
-                    row.children().each(function() {
+
+                    row.children(":visible").each(function() {
                         values.push(apex.jQuery(this).text().trim());
                     });
-            
+
                     const detailsHtml = headers.map((headerText, index) => {
                         const valueText = values[index] || "";
                         return `<p><strong>${escapeHtml(headerText)}:</strong> ${escapeHtml(valueText)}</p>`;
                     }).join("");
-            
-                    apex.jQuery(`<div>${detailsHtml}</div>`).dialog({
+
+                    apex.jQuery(`<div style="padding: 10px; box-sizing: border-box;">${detailsHtml}</div>`).dialog({
                         modal: true,
-                        title: `Ligne ${escapeHtml(values[1] || values[0] || "")}`,
+                        title: `Ligne ${escapeHtml(values[0] || "")}`,
                         width: 640,
                         close() {
                             apex.jQuery(this).dialog("destroy").remove();
                         }
                     });
                 }
-            
+
+                hideIdColumn();
+                applyChiffresFilter();
+
                 apex.jQuery(document)
                     .off("input.lesChiffresFilter", filterItemSelector)
                     .on("input.lesChiffresFilter", filterItemSelector, applyChiffresFilter)
                     .off("click.lesChiffresSort", `${reportTableSelector} thead th`)
-                    .on("click.lesChiffresSort", `${reportTableSelector} thead th`, function() {
+                    .on("click.lesChiffresSort", `${reportTableSelector} thead th:visible`, function() {
                         sortChiffresTable(apex.jQuery(this).index());
                     })
                     .off("click.lesChiffresModal", `${reportTableSelector} tbody tr`)
@@ -107,7 +122,9 @@ page 4 (
                         showChiffresModal(apex.jQuery(this));
                     })
                     .off("apexafterrefresh.lesChiffres", reportRegionSelector)
-                    .on("apexafterrefresh.lesChiffres", reportRegionSelector, applyChiffresFilter);
+                    .on("apexafterrefresh.lesChiffres", reportRegionSelector, function() {
+                        applyChiffresFilter();
+                    });
             });
             ```
     }
@@ -195,7 +212,7 @@ page 4 (
             ]
         }
         pagination {
-            type: rowRangesXToYNoPagination
+            type: setPaginationSelectList
         }
         messages {
             whenNoDataFound: Aucune valeur disponible
@@ -219,7 +236,7 @@ page 4 (
             reportColumnQueryId: 8
             derivedColumn: N
             heading {
-                heading: Coreen
+                heading: Coréen
             }
             layout {
                 sequence: 80
@@ -247,7 +264,7 @@ page 4 (
             reportColumnQueryId: 3
             derivedColumn: N
             heading {
-                heading: Francais
+                heading: Français
             }
             layout {
                 sequence: 30
@@ -319,7 +336,7 @@ page 4 (
             reportColumnQueryId: 2
             derivedColumn: N
             heading {
-                heading: Numero
+                heading: Numéro
                 alignment: end
             }
             layout {
