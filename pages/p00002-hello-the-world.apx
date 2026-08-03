@@ -1,0 +1,33 @@
+page 2 (
+    name: Hello the World
+    alias: HELLO-THE-WORLD
+    title: Hello the World
+    appearance {
+        pageTemplate: @/standard
+        templateOptions: #DEFAULT#
+    }
+    navigation {
+        cursorFocus: doNotFocusCursor
+    }
+    security {
+        pageAccessProtection: argumentsMustHaveChecksum
+        formAutoComplete: false
+    }
+
+    region hello-the-world (
+        name: Hello the World
+        type: staticContent
+        source {
+            htmlCode: <p>Hello the World</p>
+        }
+        layout {
+            sequence: 10
+            slot: breadcrumbBar
+        }
+        appearance {
+            template: @/hero
+            templateOptions: #DEFAULT#
+        }
+    )
+
+)
