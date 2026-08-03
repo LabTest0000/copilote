@@ -1,0 +1,68 @@
+app COPILOTE-APEX-LLAMA3_1_8B (
+    name: Copilote APEX/LLAMA3.1:8b
+    logo {
+        type: imageAndText
+        imageUrl: #APP_FILES#icons/app-icon-256-rounded.png
+        text: Copilote APEX/LLAMA3.1:8b
+    }
+    navigation {
+        homeUrl: {
+            page: 1
+        }
+        loginUrl: {
+            page: LOGIN
+        }
+    }
+    navigationMenu {
+        listTemplate: @/side-navigation-menu
+        templateOptions: [
+            #DEFAULT#
+            js-defaultCollapsed
+            js-navCollapsed--hidden
+            t-TreeNav--styleA
+        ]
+        list: @navigation-menu
+    }
+    navigationBar {
+        list: @navigation-bar
+        listTemplate: @/navigation-bar
+        templateOptions: #DEFAULT#
+    }
+    userInterface {
+        currentTheme: @universal-theme
+        globalPage: 0
+        addBuiltWithApexToFooter: false
+    }
+    appFormatMasks {
+        date: YYYY-MM-DD
+        timestamp: DD-MON-YYYY HH24:MI
+        timestampTimeZone: DD-MON-YYYY HH24.MI.SSXFF TZR
+    }
+    authentication {
+        scheme: @oracle-apex-accounts
+    }
+    sessionStateProtection {
+        checksumSalt: B009554930E860CF5CDC2979D5EFDFF755AD1B670B14932480D25F5510A5A441
+    }
+    globalization {
+        primaryLanguage: fr-ca
+        translationMethod: textMessages
+    }
+    runtime {
+        allowFeedback: true
+    }
+
+    substitution APP_NAME (
+        value {
+            staticValue: Copilote APEX/LLAMA3.1:8b
+        }
+    )
+
+    substitution APP_TITLE (
+        value {
+            staticValue: Copilote APEX/LLAMA3.1:8b
+        }
+    )
+
+)
+

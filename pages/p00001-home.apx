@@ -1,0 +1,501 @@
+page 1 (
+    name: Home
+    alias: HOME
+    title: Copilote APEX/QWEN3_CODER
+    appearance {
+        pageTemplate: @/standard
+        templateOptions: #DEFAULT#
+    }
+    navigation {
+        cursorFocus: doNotFocusCursor
+    }
+    security {
+        pageAccessProtection: argumentsMustHaveChecksum
+        formAutoComplete: false
+    }
+
+    region copilote-apex-mistral (
+        name: Copilote APEX/LLAMA3.1:8b
+        type: staticContent
+        layout {
+            sequence: 10
+            slot: breadcrumbBar
+        }
+        appearance {
+            template: @/hero
+            templateOptions: #DEFAULT#
+        }
+        image {
+            fileUrl: #APP_FILES#icons/app-icon-512.png
+        }
+    )
+
+    pageItem P1_MODE (
+        type: selectList
+        label {
+            label: Mode
+            alignment: left
+        }
+        lov {
+            type: staticValues
+            staticValues: STATIC:Développeur;DEV,Oracle APEX;APEX,Général;GENERAL
+            displayExtraValues: false
+            nullDisplayValue: -
+        }
+        layout {
+            sequence: 20
+            region: @copilote-apex-mistral
+            slot: regionBody
+            alignment: left
+        }
+        appearance {
+            template: @/optional-floating
+            templateOptions: #DEFAULT#
+            height: 1
+        }
+        validation {
+            valueRequired: true
+        }
+    )
+
+    pageItem P1_PROMPT (
+        type: textarea
+        label {
+            label: Prompt
+            alignment: left
+        }
+        settings {
+            autoHeight: true
+            charCounter: true
+        }
+        layout {
+            sequence: 30
+            region: @copilote-apex-mistral
+            slot: regionBody
+            alignment: left
+        }
+        appearance {
+            template: @/optional-floating
+            templateOptions: #DEFAULT#
+            width: 30
+            height: 5
+        }
+        validation {
+            valueRequired: true
+        }
+        sessionState {
+            dataType: clob
+        }
+    )
+
+    pageItem P1_RESPONSE (
+        type: textarea
+        label {
+            label: Réponse
+            alignment: left
+        }
+        settings {
+            autoHeight: true
+            charCounter: true
+        }
+        layout {
+            sequence: 40
+            region: @copilote-apex-mistral
+            slot: regionBody
+            alignment: left
+        }
+        appearance {
+            template: @/optional-floating
+            templateOptions: #DEFAULT#
+            width: 30
+            height: 5
+        }
+        sessionState {
+            dataType: clob
+        }
+    )
+
+    pageItem P1_SESSION_ID (
+        type: hidden
+        layout {
+            sequence: 50
+            region: @copilote-apex-mistral
+            slot: regionBody
+        }
+        source {
+            type: functionBody
+            plsqlFunctionBody: return :APP_SESSION;
+        }
+    )
+
+    button btn-clean (
+        buttonName: BTN_CLEAN
+        label: Vider
+        layout {
+            sequence: 30
+            region: @copilote-apex-mistral
+            slot: next
+        }
+        appearance {
+            buttonTemplate: @/text
+            templateOptions: #DEFAULT#
+        }
+        behavior {
+            action: definedByDynamicAction
+        }
+    )
+
+    button btn-generer (
+        buttonName: BTN_GENERER
+        label: Génerer
+        layout {
+            sequence: 10
+            region: @copilote-apex-mistral
+            slot: next
+        }
+        appearance {
+            buttonTemplate: @/text
+            hot: true
+            templateOptions: #DEFAULT#
+        }
+        behavior {
+            showProcessing: true
+            warnOnUnsavedChanges: doNotCheck
+        }
+    )
+
+    button btn-rag (
+        buttonName: BTN_RAG
+        label: Générer avec RAG
+        layout {
+            sequence: 20
+            region: @copilote-apex-mistral
+            slot: next
+        }
+        appearance {
+            buttonTemplate: @/text-with-icon
+            hot: true
+            templateOptions: [
+                #DEFAULT#
+                t-Button--iconLeft
+            ]
+        }
+        behavior {
+            executeValidations: false
+            showProcessing: true
+            warnOnUnsavedChanges: doNotCheck
+        }
+    )
+
+    dynamicAction btn-clear-click (
+        name: BTN_CLEAR_CLICK
+        execution {
+            sequence: 10
+        }
+        when {
+            event: click
+            selectionType: button
+            button: @btn-clean
+        }
+
+        action vider-les-champs (
+            name: Vider les champs
+            action: clear
+            affectedElements {
+                selectionType: items
+                items: [
+                    P1_PROMPT
+                    P1_RESPONSE
+                ]
+            }
+            execution {
+                sequence: 10
+                fireOnInit: false
+            }
+        )
+
+    )
+
+    process generer-avec-rag (
+        name: Generer avec RAG
+        type: executeCode
+        source {
+            plsqlCode:
+                ```plsql
+                DECLARE
+                    l_response   CLOB;
+                    l_body       CLOB;
+                    l_question   VARCHAR2(4000);
+                    l_mode       VARCHAR2(50);
+                    l_session_id VARCHAR2(50);
+                BEGIN
+                    -- ✅ récupérer valeurs
+                    l_question   := NVL(:P1_PROMPT, '');
+                    l_mode       := NVL(:P1_MODE, 'GENERAL');
+                    l_session_id := :APP_SESSION;
+                
+                    -- ✅ sécuriser JSON
+                    l_question := REPLACE(l_question, '"', '\"');
+                    l_question := REPLACE(l_question, CHR(10), ' ');
+                    l_question := REPLACE(l_question, CHR(13), ' ');
+                
+                    -- ✅ Construction JSON complète
+                    l_body := '{' ||
+                        '"question":"'  || l_question   || '",' ||
+                        '"mode":"'      || l_mode      || '",' ||
+                        '"sessionId":"' || l_session_id || '"' ||
+                    '}';
+                
+                    dbms_output.put_line('JSON=' || l_body);
+                
+                    -- ✅ headers REST
+                    apex_web_service.g_request_headers.delete;
+                
+                    apex_web_service.g_request_headers(1).name  := 'Content-Type';
+                    apex_web_service.g_request_headers(1).value := 'application/json';
+                
+                    -- ✅ appel API Node
+                    l_response := apex_web_service.make_rest_request(
+                        p_url         => 'http://127.0.0.1:5000/chat',
+                        p_http_method => 'POST',
+                        p_body        => l_body
+                    );
+                
+                    dbms_output.put_line('RESPONSE=' || l_response);
+                
+                    -- ✅ extraction réponse (attention clé JSON)
+                    :P1_RESPONSE := JSON_VALUE(l_response, '$.answer');
+                
+                EXCEPTION
+                    WHEN OTHERS THEN
+                        :P1_RESPONSE := 'Erreur : ' || SQLERRM;
+                        dbms_output.put_line('ERROR=' || SQLERRM);
+                END;
+                ```
+        }
+        execution {
+            sequence: 20
+        }
+        successMessage {
+            successMessage: Voici la réponse avec RAG
+        }
+        advanced {
+            executionMappingIdentifier: 4823426182869316
+        }
+        serverSideCondition {
+            whenButtonPressed: @btn-rag
+        }
+    )
+
+    process générer (
+        name: Générer
+        type: executeCode
+        source {
+            plsqlCode:
+                ```plsql
+                DECLARE
+                  l_response_clob   CLOB;
+                  l_json            JSON_OBJECT_T;
+                  l_body            CLOB;
+                  l_resp            CLOB;
+                  l_resp_lower      CLOB;
+                  l_warning         VARCHAR2(2000) := '';
+                BEGIN
+                
+                  --------------------------------------------------
+                  -- VALIDATION INPUT
+                  --------------------------------------------------
+                  IF :P1_PROMPT IS NULL THEN
+                    :P1_RESPONSE := 'Erreur : prompt vide';
+                    RETURN;
+                  END IF;
+                
+                  IF LENGTH(:P1_PROMPT) > 4000 THEN
+                    :P1_RESPONSE := 'Erreur : prompt trop long';
+                    RETURN;
+                  END IF;
+                
+                  --------------------------------------------------
+                  -- CONSTRUCTION REQUÊTE LLM
+                  --------------------------------------------------
+                  APEX_JSON.initialize_clob_output;
+                  APEX_JSON.open_object;
+                
+                  APEX_JSON.write('model', 'llama3');
+                
+                  --------------------------------------------------
+                  -- SYSTEM PROMPT V7 (FINAL)
+                  --------------------------------------------------
+                  APEX_JSON.write('system',
+                    'Tu es un expert Oracle APEX confirmé.' || chr(10) ||
+                
+                    chr(10) ||
+                
+                    'OBJECTIF :' || chr(10) ||
+                    'Fournir une solution APEX correcte, minimaliste et directement implémentable.' ||
+                
+                    chr(10) ||
+                
+                    'COMPOSANTS AUTORISÉS :' || chr(10) ||
+                    '- Region' || chr(10) ||
+                    '- Items' || chr(10) ||
+                    '- Buttons' || chr(10) ||
+                    '- Dynamic Actions' || chr(10) ||
+                    '- JavaScript (Execute JavaScript Code)' || chr(10) ||
+                    '- PL/SQL (uniquement si nécessaire)' || chr(10) ||
+                    '- API REST via APEX_WEB_SERVICE.make_rest_request (uniquement si demandé)' || chr(10) ||
+                
+                    chr(10) ||
+                
+                    'RÈGLES STRICTES :' || chr(10) ||
+                    '- Ne jamais inventer de composants APEX.' || chr(10) ||
+                    '- Ne jamais générer de balises <region>, <button>, <script>, <html>.' || chr(10) ||
+                    '- Ne pas utiliser {{ }} ni #ITEM#.' || chr(10) ||
+                    '- Ne pas utiliser :P1_A.value.' || chr(10) ||
+                    '- Utiliser uniquement $v(''P1_A'') en JavaScript.' || chr(10) ||
+                
+                    chr(10) ||
+                
+                    'FORMAT APEX :' || chr(10) ||
+                    '- Région : Type + Contenu (HTML minimal autorisé seulement pour un div).' || chr(10) ||
+                    '- Bouton : Nom + Label.' || chr(10) ||
+                    '- JavaScript uniquement dans Dynamic Action.' || chr(10) ||
+                    '- Ne jamais inclure de balise <script>.' || chr(10) ||
+                
+                    chr(10) ||
+                
+                    'CHOIX DU TYPE DE SOLUTION :' || chr(10) ||
+                    '- UI simple → Region + Items + Button + Dynamic Action' || chr(10) ||
+                    '- Visualisation → Region + JavaScript (DOM ou canvas)' || chr(10) ||
+                    '- API REST → APEX_WEB_SERVICE uniquement' || chr(10) ||
+                    '- PL/SQL → uniquement si requis explicitement' ||
+                
+                    chr(10) ||
+                
+                    'RÈGLE PRINCIPALE :' || chr(10) ||
+                    '- Identifier le besoin et utiliser UNE seule approche.' || chr(10) ||
+                    '- Ne pas mélanger UI, API et PL/SQL inutilement.' || chr(10) ||
+                    '- Ne jamais ajouter de composants inutiles.' ||
+                
+                    chr(10) ||
+                
+                    'DYNAMIC ACTION (IMPORTANT) :' || chr(10) ||
+                    'Une Dynamic Action permet de réagir à un événement utilisateur.' || chr(10) ||
+                    'Elle contient :' || chr(10) ||
+                    '- Event (ex : Click)' || chr(10) ||
+                    '- Selection Type (Button, Item, etc.)' || chr(10) ||
+                    '- Action = Execute JavaScript Code' || chr(10) ||
+                    'Le JavaScript doit être placé uniquement dans la Dynamic Action.' ||
+                
+                    chr(10) ||
+                
+                    'STRUCTURE OBLIGATOIRE :' || chr(10) ||
+                    '1. Région' || chr(10) ||
+                    '2. Items (si utilisés)' || chr(10) ||
+                    '3. Bouton (si utilisé)' || chr(10) ||
+                    '4. Dynamic Action (si utilisée)' || chr(10) ||
+                    '5. Code (JavaScript ou PL/SQL)' ||
+                
+                    chr(10) ||
+                
+                    'IMPORTANT :' || chr(10) ||
+                    '- Chaque élément doit être utilisé dans la solution.' || chr(10) ||
+                    '- Ne pas ajouter d''Items ou de PL/SQL inutile.' || chr(10) ||
+                
+                    chr(10) ||
+                
+                    'Répond uniquement en français.'
+                  );
+                
+                  APEX_JSON.write('prompt', :P1_PROMPT);
+                  APEX_JSON.write('stream', false);
+                
+                  --------------------------------------------------
+                  -- PARAMÈTRES LLM
+                  --------------------------------------------------
+                  APEX_JSON.open_object('options');
+                  APEX_JSON.write('temperature', 0.1);
+                  APEX_JSON.write('top_p', 0.9);
+                  APEX_JSON.write('num_predict', 700);
+                  APEX_JSON.close_object;
+                
+                  APEX_JSON.close_object;
+                
+                  l_body := APEX_JSON.get_clob_output;
+                  APEX_JSON.free_output;
+                
+                  --------------------------------------------------
+                  -- APPEL API
+                  --------------------------------------------------
+                  l_response_clob := APEX_WEB_SERVICE.make_rest_request(
+                    p_url         => 'http://127.0.0.1:11434/api/generate',
+                    p_http_method => 'POST',
+                    p_body        => l_body
+                  );
+                
+                  IF APEX_WEB_SERVICE.g_status_code <> 200 THEN
+                    :P1_RESPONSE := 'Erreur HTTP : ' || APEX_WEB_SERVICE.g_status_code;
+                    RETURN;
+                  END IF;
+                
+                  --------------------------------------------------
+                  -- PARSING
+                  --------------------------------------------------
+                  l_json := JSON_OBJECT_T.parse(l_response_clob);
+                
+                  IF l_json.has('error') THEN
+                    :P1_RESPONSE := 'Erreur Ollama : ' || l_json.get_string('error');
+                    RETURN;
+                  END IF;
+                
+                  l_resp := l_json.get_clob('response');
+                  l_resp_lower := LOWER(l_resp);
+                
+                  --------------------------------------------------
+                  -- VALIDATION LÉGÈRE
+                  --------------------------------------------------
+                  IF l_resp_lower LIKE '%#item%' THEN
+                    l_warning := l_warning || '#ITEM# détecté. ';
+                  END IF;
+                
+                  IF l_resp_lower LIKE '%{{%' THEN
+                    l_warning := l_warning || 'Template incorrect. ';
+                  END IF;
+                
+                  IF l_resp_lower LIKE '%:p1_a.value%' THEN
+                    l_warning := l_warning || 'JS incorrect. ';
+                  END IF;
+                
+                  --------------------------------------------------
+                  -- SORTIE
+                  --------------------------------------------------
+                  IF l_warning IS NOT NULL AND LENGTH(l_warning) > 0 THEN
+                    :P1_RESPONSE :=
+                      '⚠️ Avertissements : ' || l_warning || chr(10) || chr(10) ||
+                      l_resp;
+                  ELSE
+                    :P1_RESPONSE := l_resp;
+                  END IF;
+                
+                EXCEPTION
+                  WHEN OTHERS THEN
+                    :P1_RESPONSE := 'Erreur : ' || SQLERRM;
+                END;
+                ```
+        }
+        execution {
+            sequence: 10
+        }
+        successMessage {
+            successMessage: Voici la réponse
+        }
+        advanced {
+            executionMappingIdentifier: 4822361087869305
+        }
+        serverSideCondition {
+            whenButtonPressed: @btn-generer
+        }
+    )
+
+)
+
