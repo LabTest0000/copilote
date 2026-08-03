@@ -92,5 +92,20 @@ list navigation-menu (
         }
     )
 
+    entry documents (
+        label: Documents
+        icon {
+            imageIconCssClasses: fa-table
+        }
+        layout {
+            sequence: 30
+        }
+        link {
+            target: {
+                page: 3
+            }
+        }
+    )
+
 )
 

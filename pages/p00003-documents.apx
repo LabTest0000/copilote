@@ -1,0 +1,333 @@
+page 3 (
+    name: Documents
+    alias: DOCUMENTS
+    title: Documents
+    appearance {
+        pageTemplate: @/standard
+        templateOptions: #DEFAULT#
+    }
+    navigation {
+        cursorFocus: doNotFocusCursor
+    }
+    javaScript {
+        executeWhenPageLoads:
+            ```javascript-browser
+            apex.jQuery(() => {
+                const pageSelector = "#documents_grid .a-GV-row";
+
+                apex.jQuery(document)
+                    .off("mouseenter.documentsHover mouseleave.documentsHover", pageSelector)
+                    .on("mouseenter.documentsHover", pageSelector, function() {
+                        apex.jQuery(this).css("background-color", "#f5f9ff");
+                    })
+                    .on("mouseleave.documentsHover", pageSelector, function() {
+                        apex.jQuery(this).css("background-color", "");
+                    });
+            });
+            ```
+    }
+    security {
+        pageAccessProtection: argumentsMustHaveChecksum
+        formAutoComplete: false
+    }
+
+    region documents-grid (
+        name: Documents
+        type: interactiveGrid
+        advanced {
+            htmlDomId: documents_grid
+        }
+        source {
+            location: localDatabase
+            type: sqlQuery
+            sqlQuery:
+                ```sql
+                select id,
+                       contenu,
+                       embedding,
+                       title,
+                       source_url
+                  from documents
+                 order by id
+                ```
+        }
+        layout {
+            sequence: 10
+            slot: body
+        }
+        appearance {
+            template: @/standard
+            templateOptions: #DEFAULT#
+        }
+        edit {
+            enabled: true
+            allowedOperations: [
+                add
+                update
+                delete
+            ]
+        }
+        pagination {
+            type: page
+            showTotalCount: true
+        }
+        messages {
+            whenNoDataFound: Aucun document disponible
+        }
+        toolbar {
+            controls: [
+                searchCol
+                searchField
+                actionsMenu
+                resetButton
+                saveButton
+            ]
+        }
+        download {
+            formats: [
+                csv
+                html
+                excel
+                pdf
+            ]
+            filename: documents
+        }
+
+        savedReport PRIMARY (
+            visibility: primary
+            view {
+                default: grid
+            }
+            singleRowView {
+                displayedColumns: true
+            }
+
+            displayColumn (
+                column: @ID
+                layout {
+                    sequence: 1
+                }
+            )
+
+            displayColumn (
+                column: @TITLE
+                layout {
+                    sequence: 2
+                }
+            )
+
+            displayColumn (
+                column: @SOURCE_URL
+                layout {
+                    sequence: 3
+                }
+            )
+
+            displayColumn (
+                column: @CONTENU
+                layout {
+                    sequence: 4
+                }
+            )
+
+            displayColumn (
+                column: @EMBEDDING
+                layout {
+                    sequence: 5
+                }
+            )
+
+            displayColumn (
+                column: @APEX$ROW_ACTION
+                layout {
+                    sequence: 0
+                }
+            )
+        )
+
+        column APEX$ROW_ACTION (
+            type: actionsMenu
+            layout {
+                sequence: 10
+            }
+        )
+
+        column APEX$ROW_SELECTOR (
+            type: rowSelector
+            layout {
+                sequence: 20
+            }
+        )
+
+        column ID (
+            type: numberField
+            heading {
+                heading: ID
+                alignment: end
+            }
+            layout {
+                sequence: 30
+                columnAlignment: end
+            }
+            validation {
+                valueRequired: true
+            }
+            source {
+                databaseColumn: ID
+                dataType: number
+                primaryKey: true
+            }
+            columnFilter {
+                lovType: none
+            }
+        )
+
+        column TITLE (
+            type: textField
+            heading {
+                heading: Titre
+            }
+            layout {
+                sequence: 40
+            }
+            validation {
+                maxLength: 500
+            }
+            source {
+                databaseColumn: TITLE
+                dataType: varchar2
+            }
+            columnFilter {
+                performanceImpactingOperators: [
+                    contains
+                    startsWith
+                    caseInsensitive
+                    regexp
+                ]
+            }
+        )
+
+        column SOURCE_URL (
+            type: textField
+            heading {
+                heading: Source URL
+            }
+            layout {
+                sequence: 50
+            }
+            validation {
+                maxLength: 1000
+            }
+            source {
+                databaseColumn: SOURCE_URL
+                dataType: varchar2
+            }
+            columnFilter {
+                performanceImpactingOperators: [
+                    contains
+                    startsWith
+                    caseInsensitive
+                    regexp
+                ]
+            }
+        )
+
+        column CONTENU (
+            type: textarea
+            heading {
+                heading: Contenu
+            }
+            layout {
+                sequence: 60
+            }
+            validation {
+                maxLength: 4000
+            }
+            source {
+                databaseColumn: CONTENU
+                dataType: clob
+            }
+        )
+
+        column EMBEDDING (
+            type: textarea
+            heading {
+                heading: Embedding
+            }
+            layout {
+                sequence: 70
+            }
+            validation {
+                maxLength: 4000
+            }
+            source {
+                databaseColumn: EMBEDDING
+                dataType: clob
+            }
+        )
+
+    )
+
+    region documents-statistics (
+        name: Statistiques des documents
+        type: classicReport
+        source {
+            location: localDatabase
+            type: sqlQuery
+            sqlQuery:
+                ```sql
+                select count(*) as document_count
+                  from documents
+                ```
+        }
+        layout {
+            sequence: 20
+            slot: body
+        }
+        appearance {
+            template: @/standard
+            templateOptions: [
+                #DEFAULT#
+                t-Region--scrollBody
+            ]
+        }
+        componentAppearance {
+            template: @/standard
+            templateOptions: [
+                #DEFAULT#
+                t-Report--stretch
+                t-Report--horizontalBorders
+            ]
+        }
+        pagination {
+            type: rowRangesXToYNoPagination
+        }
+        messages {
+            whenNoDataFound: Aucune statistique disponible
+        }
+
+        column DOCUMENT_COUNT (
+            reportColumnQueryId: 1
+            derivedColumn: N
+            heading {
+                heading: Nombre de documents
+                alignment: end
+            }
+            layout {
+                sequence: 10
+                columnAlignment: end
+            }
+        )
+
+    )
+
+    process documents-grid-save (
+        name: Documents Grid - Save Data
+        type: interactiveGridAutoRowProcessing
+        editableRegion: @documents-grid
+        execution {
+            sequence: 10
+        }
+    )
+
+)
