@@ -107,5 +107,20 @@ list navigation-menu (
         }
     )
 
+    entry tester-les-actions-dynamiques (
+        label: Tester les action dynamiques
+        icon {
+            imageIconCssClasses: fa-magic
+        }
+        layout {
+            sequence: 40
+        }
+        link {
+            target: {
+                page: 4
+            }
+        }
+    )
+
 )
 

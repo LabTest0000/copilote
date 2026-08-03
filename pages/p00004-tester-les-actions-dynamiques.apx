@@ -1,0 +1,438 @@
+page 4 (
+    name: Tester les action dynamiques
+    alias: TESTER-LES-ACTIONS-DYNAMIQUES
+    title: Tester les action dynamiques
+    appearance {
+        pageTemplate: @/standard
+        templateOptions: #DEFAULT#
+    }
+    navigation {
+        cursorFocus: doNotFocusCursor
+    }
+    javaScript {
+        executeWhenPageLoads:
+            ```javascript-browser
+            apex.jQuery(() => {
+                apex.item("P4_SELECTED_VALUE").hide();
+            });
+            ```
+    }
+    security {
+        pageAccessProtection: argumentsMustHaveChecksum
+        formAutoComplete: false
+    }
+
+    region dynamic-actions-demo (
+        name: Contrôles dynamiques
+        type: staticContent
+        layout {
+            sequence: 10
+            slot: body
+        }
+        appearance {
+            template: @/standard
+            templateOptions: #DEFAULT#
+        }
+    )
+
+    region html-demo (
+        name: Région HTML
+        type: staticContent
+        source {
+            htmlCode:
+                ```html
+                <p>Cette région HTML sert à tester les actions dynamiques d'affichage et de masquage.</p>
+                <p>Utilisez les boutons plus bas pour masquer ou afficher tous les contrôles de la page.</p>
+                ```
+        }
+        layout {
+            sequence: 20
+            parentRegion: @dynamic-actions-demo
+            slot: regionBody
+        }
+        appearance {
+            template: @/standard
+            templateOptions: #DEFAULT#
+        }
+    )
+
+    pageItem P4_TEXT_FIELD (
+        type: textField
+        label {
+            label: Champ texte
+            alignment: left
+        }
+        layout {
+            sequence: 30
+            region: @dynamic-actions-demo
+            slot: regionBody
+            alignment: left
+        }
+        appearance {
+            template: @/optional-floating
+            templateOptions: #DEFAULT#
+            width: 30
+        }
+        validation {
+            maxLength: 100
+        }
+    )
+
+    pageItem P4_TEXTAREA (
+        type: textarea
+        label {
+            label: Zone de texte
+            alignment: left
+        }
+        settings {
+            autoHeight: true
+            charCounter: true
+        }
+        layout {
+            sequence: 40
+            region: @dynamic-actions-demo
+            slot: regionBody
+            alignment: left
+        }
+        appearance {
+            template: @/optional-floating
+            templateOptions: #DEFAULT#
+            width: 30
+            height: 5
+        }
+        validation {
+            maxLength: 4000
+        }
+        sessionState {
+            dataType: clob
+        }
+    )
+
+    pageItem P4_SELECT_LIST (
+        type: selectList
+        label {
+            label: Liste déroulante
+            alignment: left
+        }
+        lov {
+            type: staticValues
+            staticValues: STATIC:Alpha;Alpha,Beta;Beta,Gamma;Gamma
+            displayExtraValues: false
+            nullDisplayValue: -
+        }
+        layout {
+            sequence: 50
+            region: @dynamic-actions-demo
+            slot: regionBody
+            alignment: left
+        }
+        appearance {
+            template: @/optional-floating
+            templateOptions: #DEFAULT#
+            height: 1
+        }
+    )
+
+    pageItem P4_CHECKBOX (
+        type: checkbox
+        label {
+            label: Case à cocher
+            alignment: left
+        }
+        settings {
+            useDefaults: false
+            checkedValue: Y
+            uncheckedValue: N
+        }
+        layout {
+            sequence: 60
+            region: @dynamic-actions-demo
+            slot: regionBody
+            alignment: left
+        }
+        appearance {
+            template: @/optional
+            templateOptions: #DEFAULT#
+        }
+    )
+
+    pageItem P4_RADIO_GROUP (
+        type: radioGroup
+        label {
+            label: Groupe radio
+            alignment: left
+        }
+        lov {
+            type: staticValues
+            staticValues: STATIC:Option 1;1,Option 2;2,Option 3;3
+            displayExtraValues: false
+            displayNullValue: false
+        }
+        layout {
+            sequence: 70
+            region: @dynamic-actions-demo
+            slot: regionBody
+            alignment: left
+        }
+        appearance {
+            template: @/optional-floating
+            templateOptions: #DEFAULT#
+        }
+    )
+
+    pageItem P4_SWITCH (
+        type: switch
+        label {
+            label: Interrupteur
+            alignment: left
+        }
+        settings {
+            useDefaults: false
+            onValue: Y
+            offValue: N
+        }
+        layout {
+            sequence: 80
+            region: @dynamic-actions-demo
+            slot: regionBody
+            alignment: left
+        }
+        appearance {
+            template: @/optional
+            templateOptions: #DEFAULT#
+        }
+    )
+
+    pageItem P4_SELECTED_VALUE (
+        type: textField
+        label {
+            label: Valeur sélectionnée
+            alignment: left
+        }
+        layout {
+            sequence: 90
+            region: @dynamic-actions-demo
+            slot: regionBody
+            alignment: left
+        }
+        appearance {
+            template: @/optional-floating
+            templateOptions: #DEFAULT#
+            width: 30
+        }
+        validation {
+            maxLength: 100
+        }
+    )
+
+    button show-controls (
+        buttonName: SHOW_CONTROLS
+        label: Afficher les contrôles
+        layout {
+            sequence: 100
+            region: @dynamic-actions-demo
+            slot: next
+        }
+        appearance {
+            buttonTemplate: @/text
+            hot: true
+            templateOptions: #DEFAULT#
+        }
+        behavior {
+            action: definedByDynamicAction
+        }
+    )
+
+    button hide-controls (
+        buttonName: HIDE_CONTROLS
+        label: Cacher les contrôles
+        layout {
+            sequence: 110
+            region: @dynamic-actions-demo
+            slot: next
+        }
+        appearance {
+            buttonTemplate: @/text
+            templateOptions: #DEFAULT#
+        }
+        behavior {
+            action: definedByDynamicAction
+        }
+    )
+
+    dynamicAction show-controls-click (
+        name: Show Controls
+        execution {
+            sequence: 10
+        }
+        when {
+            event: click
+            selectionType: button
+            button: @show-controls
+        }
+
+        action show-items (
+            action: show
+            affectedElements {
+                selectionType: items
+                items: [
+                    P4_TEXT_FIELD
+                    P4_TEXTAREA
+                    P4_SELECT_LIST
+                    P4_CHECKBOX
+                    P4_RADIO_GROUP
+                    P4_SWITCH
+                    P4_SELECTED_VALUE
+                ]
+            }
+            execution {
+                sequence: 10
+                fireOnInit: false
+            }
+        )
+
+        action show-html-region (
+            action: show
+            affectedElements {
+                selectionType: region
+                region: @html-demo
+            }
+            execution {
+                sequence: 20
+                fireOnInit: false
+            }
+        )
+
+    )
+
+    dynamicAction hide-controls-click (
+        name: Hide Controls
+        execution {
+            sequence: 20
+        }
+        when {
+            event: click
+            selectionType: button
+            button: @hide-controls
+        }
+
+        action hide-items (
+            action: hide
+            affectedElements {
+                selectionType: items
+                items: [
+                    P4_TEXT_FIELD
+                    P4_TEXTAREA
+                    P4_SELECT_LIST
+                    P4_CHECKBOX
+                    P4_RADIO_GROUP
+                    P4_SWITCH
+                    P4_SELECTED_VALUE
+                ]
+            }
+            execution {
+                sequence: 10
+                fireOnInit: false
+            }
+        )
+
+        action hide-html-region (
+            action: hide
+            affectedElements {
+                selectionType: region
+                region: @html-demo
+            }
+            execution {
+                sequence: 20
+                fireOnInit: false
+            }
+        )
+
+    )
+
+    dynamicAction set-selected-value (
+        name: Set Selected Value
+        execution {
+            sequence: 30
+        }
+        when {
+            selectionType: items
+            items: P4_SELECT_LIST
+        }
+        clientSideCondition {
+            type: jsExpression
+            javaScriptExpression: $v('P4_SELECT_LIST') !== ''
+        }
+
+        action set-value-from-select (
+            action: setValue
+            settings {
+                type: jsExpression
+                jsExpression: $v('P4_SELECT_LIST')
+                suppressChangeEvent: true
+            }
+            affectedElements {
+                selectionType: items
+                items: P4_SELECTED_VALUE
+            }
+            execution {
+                sequence: 10
+                fireOnInit: false
+            }
+        )
+
+        action show-selected-value (
+            action: show
+            affectedElements {
+                selectionType: items
+                items: P4_SELECTED_VALUE
+            }
+            execution {
+                sequence: 20
+                fireOnInit: false
+            }
+        )
+
+    )
+
+    dynamicAction hide-selected-value (
+        name: Hide Selected Value
+        execution {
+            sequence: 40
+        }
+        when {
+            selectionType: items
+            items: P4_SELECT_LIST
+        }
+        clientSideCondition {
+            type: itemIsNull
+            item: P4_SELECT_LIST
+        }
+
+        action hide-selected-item (
+            action: hide
+            affectedElements {
+                selectionType: items
+                items: P4_SELECTED_VALUE
+            }
+            execution {
+                sequence: 10
+                fireOnInit: false
+            }
+        )
+
+        action clear-selected-item (
+            action: clear
+            affectedElements {
+                selectionType: items
+                items: P4_SELECTED_VALUE
+            }
+            execution {
+                sequence: 20
+                fireOnInit: false
+            }
+        )
+
+    )
+
+)
