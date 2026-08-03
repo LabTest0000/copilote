@@ -14,6 +14,100 @@ page 4 (
             ```javascript-browser
             apex.jQuery(() => {
                 apex.item("P4_SELECTED_VALUE").hide();
+
+                const reportRegionSelector = "#les_chiffres_report";
+                const reportTableSelector = `${reportRegionSelector} .t-Report-report`;
+                const filterItemSelector = "#P4_CHIFFRES_FILTER";
+
+                function getReportTable() {
+                    return apex.jQuery(reportTableSelector);
+                }
+
+                function applyChiffresFilter() {
+                    const filterValue = apex.jQuery(filterItemSelector).val().toString().trim().toLowerCase();
+
+                    getReportTable()
+                        .find("tbody tr")
+                        .each(function() {
+                            const row = apex.jQuery(this);
+                            const rowText = row.text().toLowerCase();
+                            row.toggle(filterValue === "" || rowText.indexOf(filterValue) >= 0);
+                        });
+                }
+
+                function sortChiffresTable(columnIndex) {
+                    const table = getReportTable();
+                    const tbody = table.find("tbody");
+                    const header = table.find("thead th").eq(columnIndex);
+                    const currentDirection = header.attr("data-sort-direction") === "asc" ? "asc" : "desc";
+                    const nextDirection = currentDirection === "asc" ? "desc" : "asc";
+                    const rows = tbody.find("tr").get();
+
+                    table.find("thead th").removeAttr("data-sort-direction");
+                    header.attr("data-sort-direction", nextDirection);
+
+                    rows.sort((leftRow, rightRow) => {
+                        const leftText = apex.jQuery(leftRow).children().eq(columnIndex).text().trim();
+                        const rightText = apex.jQuery(rightRow).children().eq(columnIndex).text().trim();
+                        const leftNumber = Number(leftText);
+                        const rightNumber = Number(rightText);
+
+                        let compareResult;
+
+                        if (!Number.isNaN(leftNumber) && !Number.isNaN(rightNumber)) {
+                            compareResult = leftNumber - rightNumber;
+                        } else {
+                            compareResult = leftText.localeCompare(rightText, "fr", { sensitivity: "base" });
+                        }
+
+                        return nextDirection === "asc" ? compareResult : -compareResult;
+                    });
+
+                    apex.jQuery.each(rows, (_, row) => tbody.append(row));
+                    applyChiffresFilter();
+                }
+
+                function showChiffresModal(row) {
+                    const escapeHtml = apex.util.escapeHTML;
+                    const headers = [];
+                    const values = [];
+
+                    getReportTable().find("thead th").each(function() {
+                        headers.push(apex.jQuery(this).text().trim());
+                    });
+
+                    row.children().each(function() {
+                        values.push(apex.jQuery(this).text().trim());
+                    });
+
+                    const detailsHtml = headers.map((headerText, index) => {
+                        const valueText = values[index] || "";
+                        return `<p><strong>${escapeHtml(headerText)}:</strong> ${escapeHtml(valueText)}</p>`;
+                    }).join("");
+
+                    apex.jQuery(`<div>${detailsHtml}</div>`).dialog({
+                        modal: true,
+                        title: `Ligne ${escapeHtml(values[1] || values[0] || "")}`,
+                        width: 640,
+                        close() {
+                            apex.jQuery(this).dialog("destroy").remove();
+                        }
+                    });
+                }
+
+                apex.jQuery(document)
+                    .off("input.lesChiffresFilter", filterItemSelector)
+                    .on("input.lesChiffresFilter", filterItemSelector, applyChiffresFilter)
+                    .off("click.lesChiffresSort", `${reportTableSelector} thead th`)
+                    .on("click.lesChiffresSort", `${reportTableSelector} thead th`, function() {
+                        sortChiffresTable(apex.jQuery(this).index());
+                    })
+                    .off("click.lesChiffresModal", `${reportTableSelector} tbody tr`)
+                    .on("click.lesChiffresModal", `${reportTableSelector} tbody tr`, function() {
+                        showChiffresModal(apex.jQuery(this));
+                    })
+                    .off("apexafterrefresh.lesChiffres", reportRegionSelector)
+                    .on("apexafterrefresh.lesChiffres", reportRegionSelector, applyChiffresFilter);
             });
             ```
     }
@@ -258,6 +352,203 @@ page 4 (
         behavior {
             action: definedByDynamicAction
         }
+    )
+
+    region les-chiffres-section (
+        name: Table LES_CHIFFRES
+        type: staticContent
+        source {
+            htmlCode:
+                ```html
+                <p>Cette section affiche les valeurs fixes de la table LES_CHIFFRES. Cliquez sur un en-tête pour trier ou sur une ligne pour ouvrir le détail complet dans une fenêtre modale.</p>
+                ```
+        }
+        layout {
+            sequence: 120
+            slot: body
+        }
+        appearance {
+            template: @/standard
+            templateOptions: #DEFAULT#
+        }
+    )
+
+    pageItem P4_CHIFFRES_FILTER (
+        type: textField
+        label {
+            label: Filtrer les lignes
+            alignment: left
+        }
+        layout {
+            sequence: 10
+            region: @les-chiffres-section
+            slot: regionBody
+            alignment: left
+        }
+        appearance {
+            template: @/optional-floating
+            templateOptions: #DEFAULT#
+            width: 30
+        }
+        validation {
+            maxLength: 100
+        }
+    )
+
+    region les-chiffres-report (
+        name: Valeurs fixes LES_CHIFFRES
+        type: classicReport
+        advanced {
+            htmlDomId: les_chiffres_report
+        }
+        source {
+            location: localDatabase
+            type: sqlQuery
+            sqlQuery:
+                ```sql
+                select id,
+                       numero,
+                       francais,
+                       anglais,
+                       espagnol,
+                       grec,
+                       hindi,
+                       coreen,
+                       japonais
+                  from les_chiffres
+                 order by numero
+                ```
+        }
+        layout {
+            sequence: 20
+            parentRegion: @les-chiffres-section
+            slot: regionBody
+        }
+        appearance {
+            template: @/standard
+            templateOptions: [
+                #DEFAULT#
+                t-Region--scrollBody
+            ]
+        }
+        componentAppearance {
+            template: @/standard
+            templateOptions: [
+                #DEFAULT#
+                t-Report--stretch
+                t-Report--horizontalBorders
+            ]
+        }
+        pagination {
+            type: rowRangesXToYNoPagination
+        }
+        messages {
+            whenNoDataFound: Aucune valeur disponible
+        }
+
+        column ID (
+            reportColumnQueryId: 1
+            derivedColumn: N
+            heading {
+                heading: ID
+                alignment: end
+            }
+            layout {
+                sequence: 10
+                columnAlignment: end
+            }
+        )
+
+        column NUMERO (
+            reportColumnQueryId: 2
+            derivedColumn: N
+            heading {
+                heading: Numero
+                alignment: end
+            }
+            layout {
+                sequence: 20
+                columnAlignment: end
+            }
+        )
+
+        column FRANCAIS (
+            reportColumnQueryId: 3
+            derivedColumn: N
+            heading {
+                heading: Francais
+            }
+            layout {
+                sequence: 30
+            }
+        )
+
+        column ANGLAIS (
+            reportColumnQueryId: 4
+            derivedColumn: N
+            heading {
+                heading: Anglais
+            }
+            layout {
+                sequence: 40
+            }
+        )
+
+        column ESPAGNOL (
+            reportColumnQueryId: 5
+            derivedColumn: N
+            heading {
+                heading: Espagnol
+            }
+            layout {
+                sequence: 50
+            }
+        )
+
+        column GREC (
+            reportColumnQueryId: 6
+            derivedColumn: N
+            heading {
+                heading: Grec
+            }
+            layout {
+                sequence: 60
+            }
+        )
+
+        column HINDI (
+            reportColumnQueryId: 7
+            derivedColumn: N
+            heading {
+                heading: Hindi
+            }
+            layout {
+                sequence: 70
+            }
+        )
+
+        column COREEN (
+            reportColumnQueryId: 8
+            derivedColumn: N
+            heading {
+                heading: Coreen
+            }
+            layout {
+                sequence: 80
+            }
+        )
+
+        column JAPONAIS (
+            reportColumnQueryId: 9
+            derivedColumn: N
+            heading {
+                heading: Japonais
+            }
+            layout {
+                sequence: 90
+            }
+        )
+
     )
 
     dynamicAction show-controls-click (
