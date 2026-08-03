@@ -1,0 +1,42 @@
+page 2 (
+    name: À propos de l'application
+    alias: A-PROPOS-APPLICATION
+    title: À propos de l'application
+    appearance {
+        pageTemplate: @/standard
+        templateOptions: #DEFAULT#
+    }
+    navigation {
+        cursorFocus: doNotFocusCursor
+    }
+    security {
+        pageAccessProtection: argumentsMustHaveChecksum
+        formAutoComplete: false
+    }
+
+    region about-application (
+        name: À Propos de
+        type: staticContent
+        source {
+            htmlCode:
+                ```html
+                <p>Cette application est un test de chatbox avec recherche augmentée.</p>
+                <p>Elle peut se spécialiser en Oracle APEX.</p>
+                <p>Avant utilisation, démarrez les services suivants :</p>
+                <ol>
+                  <li>Lancez Ollama avec <code>ollama run llama3.1:8b</code>.</li>
+                  <li>Démarrez le service qui fait le pont entre l'IA et la base de données pour les recherches augmentées avec <code>node server.js</code>.</li>
+                </ol>
+                ```
+        }
+        layout {
+            sequence: 10
+            slot: body
+        }
+        appearance {
+            template: @/standard
+            templateOptions: #DEFAULT#
+        }
+    )
+
+)
