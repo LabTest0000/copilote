@@ -122,5 +122,20 @@ list navigation-menu (
         }
     )
 
+    entry carte-du-monde (
+        label: Carte du monde
+        icon {
+            imageIconCssClasses: fa-globe
+        }
+        layout {
+            sequence: 50
+        }
+        link {
+            target: {
+                page: 6
+            }
+        }
+    )
+
 )
 
