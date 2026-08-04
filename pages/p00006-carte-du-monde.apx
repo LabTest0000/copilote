@@ -21,20 +21,60 @@ page 6 (
             htmlCode:
                 ```html
                 <div style="max-width: 1080px; margin: 0 auto; padding: 8px 0;">
-                  <p style="margin-bottom: 16px;">Cette region HTML affiche une carte du monde integree directement dans la page.</p>
-                  <div style="background: linear-gradient(180deg, #eaf6ff 0%, #d5ecff 100%); border: 1px solid #bfdcf2; border-radius: 16px; padding: 18px; box-shadow: 0 10px 24px rgba(10, 61, 98, 0.08); overflow-x: auto;">
-                    <div role="img" aria-label="Carte du monde stylisee" style="position: relative; min-width: 720px; height: 360px; border-radius: 14px; background: linear-gradient(180deg, #cae9ff 0%, #b9e0ff 100%); overflow: hidden;">
-                      <div style="position: absolute; top: 34px; left: 78px; width: 145px; height: 100px; background: #5f9f68; border: 4px solid #4b8052; border-radius: 52% 48% 45% 55% / 48% 55% 45% 52%; transform: rotate(-8deg);"></div>
-                      <div style="position: absolute; top: 126px; left: 170px; width: 72px; height: 100px; background: #5f9f68; border: 4px solid #4b8052; border-radius: 45% 55% 50% 50% / 35% 40% 60% 65%; transform: rotate(10deg);"></div>
-                      <div style="position: absolute; top: 42px; left: 298px; width: 228px; height: 108px; background: #5f9f68; border: 4px solid #4b8052; border-radius: 44% 56% 41% 59% / 50% 44% 56% 50%; transform: rotate(2deg);"></div>
-                      <div style="position: absolute; top: 128px; left: 398px; width: 92px; height: 146px; background: #5f9f68; border: 4px solid #4b8052; border-radius: 46% 54% 43% 57% / 38% 42% 58% 62%; transform: rotate(6deg);"></div>
-                      <div style="position: absolute; top: 58px; left: 566px; width: 214px; height: 104px; background: #5f9f68; border: 4px solid #4b8052; border-radius: 48% 52% 44% 56% / 45% 48% 52% 55%; transform: rotate(4deg);"></div>
-                      <div style="position: absolute; top: 186px; left: 676px; width: 84px; height: 58px; background: #5f9f68; border: 4px solid #4b8052; border-radius: 56% 44% 55% 45% / 50% 45% 55% 50%; transform: rotate(-12deg);"></div>
-                      <div style="position: absolute; top: 262px; left: 782px; width: 48px; height: 30px; background: #5f9f68; border: 4px solid #4b8052; border-radius: 55% 45% 60% 40% / 50% 45% 55% 50%; transform: rotate(14deg);"></div>
-                      <div style="position: absolute; top: 40px; left: 122px; width: 42px; height: 42px; background: rgba(255,255,255,0.42); border-radius: 50%;"></div>
-                      <div style="position: absolute; top: 30px; left: 416px; width: 56px; height: 56px; background: rgba(255,255,255,0.42); border-radius: 50%;"></div>
-                      <div style="position: absolute; top: 52px; left: 698px; width: 46px; height: 46px; background: rgba(255,255,255,0.42); border-radius: 50%;"></div>
-                    </div>
+                                    <p style="margin-bottom: 16px;">Cette region HTML affiche une carte du monde vectorielle avec une silhouette plus proche d'une projection equirectangulaire classique.</p>
+                                    <div style="background: linear-gradient(180deg, #f3fbff 0%, #dcefff 100%); border: 1px solid #bfdcf2; border-radius: 16px; padding: 18px; box-shadow: 0 10px 24px rgba(10, 61, 98, 0.08); overflow-x: auto;">
+                                        <div role="img" aria-label="Carte du monde vectorielle" style="min-width: 720px; border-radius: 14px; background: linear-gradient(180deg, #cfeeff 0%, #9ed3f7 100%); overflow: hidden;">
+                                            <svg viewBox="0 0 1200 600" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg">
+                                                <defs>
+                                                    <linearGradient id="ocean" x1="0" y1="0" x2="0" y2="1">
+                                                        <stop offset="0%" stop-color="#d9f2ff" />
+                                                        <stop offset="100%" stop-color="#8dcdf3" />
+                                                    </linearGradient>
+                                                    <linearGradient id="land" x1="0" y1="0" x2="0" y2="1">
+                                                        <stop offset="0%" stop-color="#80b76f" />
+                                                        <stop offset="100%" stop-color="#5d8f54" />
+                                                    </linearGradient>
+                                                    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+                                                        <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#0a3d62" flood-opacity="0.18" />
+                                                    </filter>
+                                                </defs>
+
+                                                <rect width="1200" height="600" fill="url(#ocean)" />
+
+                                                <g opacity="0.3" stroke="#ffffff" stroke-width="1">
+                                                    <line x1="0" y1="100" x2="1200" y2="100" />
+                                                    <line x1="0" y1="200" x2="1200" y2="200" />
+                                                    <line x1="0" y1="300" x2="1200" y2="300" />
+                                                    <line x1="0" y1="400" x2="1200" y2="400" />
+                                                    <line x1="0" y1="500" x2="1200" y2="500" />
+                                                    <line x1="200" y1="0" x2="200" y2="600" />
+                                                    <line x1="400" y1="0" x2="400" y2="600" />
+                                                    <line x1="600" y1="0" x2="600" y2="600" />
+                                                    <line x1="800" y1="0" x2="800" y2="600" />
+                                                    <line x1="1000" y1="0" x2="1000" y2="600" />
+                                                </g>
+
+                                                <g fill="url(#land)" stroke="#446f44" stroke-width="4" filter="url(#shadow)">
+                                                    <path d="M111 130 L155 102 L216 96 L267 110 L292 139 L292 165 L257 180 L236 207 L206 215 L188 251 L165 281 L151 327 L120 314 L124 279 L103 253 L92 216 L63 178 L73 150 Z" />
+                                                    <path d="M246 325 L281 338 L299 369 L292 419 L272 466 L257 521 L228 560 L206 548 L209 496 L227 447 L213 408 L223 364 Z" />
+                                                    <path d="M310 79 L337 70 L367 82 L359 108 L334 118 L309 108 Z" />
+                                                    <path d="M472 107 L521 101 L552 112 L584 105 L626 116 L676 112 L727 126 L774 126 L807 145 L821 172 L790 192 L754 201 L727 188 L703 195 L674 178 L640 186 L617 208 L589 209 L554 227 L519 221 L480 209 L456 186 L462 156 Z" />
+                                                    <path d="M584 226 L618 217 L646 226 L667 254 L673 293 L686 331 L679 382 L657 428 L621 452 L588 431 L582 392 L561 351 L552 309 L563 266 Z" />
+                                                    <path d="M855 250 L895 237 L953 244 L1003 258 L1043 283 L1032 312 L992 321 L963 343 L924 352 L889 335 L860 309 Z" />
+                                                    <path d="M1019 421 L1051 406 L1084 412 L1118 434 L1110 459 L1077 472 L1042 466 L1012 447 Z" />
+                                                    <path d="M286 535 L905 535 L872 564 L312 564 Z" />
+                                                    <path d="M760 144 L789 136 L812 145 L799 168 L774 174 L751 162 Z" />
+                                                    <path d="M706 87 L719 76 L739 81 L742 95 L726 104 L710 98 Z" />
+                                                    <path d="M935 365 L956 359 L972 370 L967 387 L946 393 L930 382 Z" />
+                                                </g>
+
+                                                <g fill="#ffffff" opacity="0.34">
+                                                    <circle cx="212" cy="88" r="28" />
+                                                    <circle cx="593" cy="82" r="36" />
+                                                    <circle cx="965" cy="108" r="30" />
+                                                </g>
+                                            </svg>
+                                        </div>
                   </div>
                 </div>
                 ```
